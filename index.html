@@ -195,7 +195,6 @@
     .text-right {
       text-align: right;
     }
-
     .text-bold {
       font-weight: bold;
     }
@@ -208,23 +207,22 @@
         <div id="invoice-app">
             <div class="header">
                 <div>
-                    <h1>Quittance de loyer</h1>
-                    <p>Quittance émise le <input type="text" v-model="invoiceDate"></p>
+                    <h1 contenteditable><input type="text" v-model="invoice.pageTitle"></h1>
+                    <p><input type="text" v-model="invoice.invoiceDate"></p>
                 </div>
                 <div>
-                  
-                    <div class="section-spacer">
-                        <p><strong>Propriétaire</strong></p>
-                        <textarea v-on:keyup="adjustTextAreaHeight" v-model="owner"></textarea>
-                    </div>
-                    <div class="section-spacer">
-                        <p><strong>Locataire(s)</strong></p>
-                        <textarea v-on:keyup="adjustTextAreaHeight" v-model="client"></textarea>
-                    </div>
+                  <div class="section-spacer">
+                      <p><input type="text" class="text-bold" v-model="invoice.ownerTitle"></p>
+                      <textarea v-on:keyup="adjustTextAreaHeight" v-model="invoice.owner"></textarea>
+                  </div>
+                  <div class="section-spacer">
+                      <p><input type="text" class="text-bold" v-model="invoice.clientTitle"></p>
+                      <textarea v-on:keyup="adjustTextAreaHeight" v-model="invoice.client"></textarea>
+                  </div>
                 </div>
             </div>
             <table class="responsive-table">
-                <tr v-for="(item, index) in items">
+                <tr v-for="(item, index) in invoice.items">
                     <td><input type="text" v-model="item.name" placeholder="Item name" /></td>
                     <td><input type="text" v-model="item.description" placeholder="Item description"  /></td>
                     <td class="text-right"><button class="is-danger" v-on:click="deleteItem(index)">Delete item</button></td>
@@ -234,12 +232,12 @@
 
           <div class="section-spacer">
                 <p class="label">Notes:</p>
-                <textarea v-on:keyup="adjustTextAreaHeight" v-model="notes"></textarea>
+                <textarea v-on:keyup="adjustTextAreaHeight" v-model="invoice.notes"></textarea>
             </div>
             
             <div class="section-spacer">
                 <p class="label">Terms:</p>
-                <textarea v-on:keyup="adjustTextAreaHeight" v-model="terms" class="small-text"></textarea>
+                <textarea v-on:keyup="adjustTextAreaHeight" v-model="invoice.terms" class="small-text"></textarea>
             </div>
             <button v-on:click="printInvoice">Print Invoice</button>
         </div>
@@ -254,35 +252,33 @@
     var app = new Vue({
         el: '#invoice-app',
         data: {
+          invoice: {
+            pageTitle: 'Quittance de loyer',
             items: [],
+            ownerTitle: 'Propriétaire',
+            clientTitle: 'Locataire(s)',
             owner: '',
             client: '',
             invoiceDate: new Date().toLocaleDateString(),
             notes: `Fait à XXX, le ${new Date().toLocaleDateString()}.`,
             terms: `Cette quittance annule tous les reçus qui auraient pu être établis précédemment en cas de paiement partiel du montant du
-présent terme. Elle est à conserver pendant trois ans par le locataire (article 7-1 de la loi n° 89-462 du 6 juillet 1989).`
-        },
-        created() {
-            var storedData = localStorage.getItem('data')
-            if (storedData) {
-              storedData = JSON.parse(storedData)
-
-              this.items = storedData.items
-              this.owner = storedData.owner
-              this.client = storedData.client
-              this.invoiceDate = storedData.invoiceDate
-              this.notes = storedData.notes
-              this.terms = storedData.terms
-            }
+  présent terme. Elle est à conserver pendant trois ans par le locataire (article 7-1 de la loi n° 89-462 du 6 juillet 1989).`
+          }
+      },
+      created() {
+          var storedInvoice = localStorage.getItem('invoice')
+          if (storedInvoice) {
+            this.invoice = JSON.parse(storedInvoice)
+          }
         },
         methods: {
             addNewItem: function() {
-                this.items.push(
+                this.invoice.items.push(
                     { name: '', description: ''}
                 )
             },
             deleteItem: function(index) {
-                this.items.splice(index, 1)
+                this.invoice.items.splice(index, 1)
             },
             printInvoice: function() {
                 window.print();
@@ -293,38 +289,16 @@ présent terme. Elle est à conserver pendant trois ans par le locataire (articl
                 el.style.height = (25+el.scrollHeight)+"px";
             },
             saveStoredData() {
-              localStorage.setItem('data', JSON.stringify({
-                items: this.items,
-                owner: this.owner,
-                client: this.client,
-                invoiceDate: this.invoiceDate,
-                notes: this.notes,
-                terms: this.terms
-              }))
+              localStorage.setItem('invoice', JSON.stringify(this.invoice))
             }
         },
         watch: {
-          items: {
+          invoice: {
             handler: function(val, oldVal) {
               this.saveStoredData()
             },
             deep: true
-          },
-          client: function(val, oldVal) {
-            this.saveStoredData()
-          },
-          owner: function(val, oldVal) {
-            this.saveStoredData()
-          },
-          invoiceDate: function(val, oldVal) {
-            this.saveStoredData()
-          },
-          notes: function(val, oldVal) {
-            this.saveStoredData()
-          },
-          terms: function(val, oldVal) {
-            this.saveStoredData()
-          },
+          }
         }
     });
   }, false);
